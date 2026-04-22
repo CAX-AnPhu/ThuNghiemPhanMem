@@ -40,7 +40,7 @@
 </head>
 <body>
 
-    <div class="container">
+    <div class="container" id="phan-khung-chinh">
         <div id="man-hinh-dang-nhap">
             <h2>CÔNG AN XÃ AN PHÚ</h2>
             <div class="form-group">
@@ -64,8 +64,8 @@
             <div id="danh-sach-cau-hoi"></div>
             
             <div class="dieu-huong">
-                <button id="btn-truoc" onclick="chuyenCau(-1)" style="display: none;">⬅ Câu Trước</button>
-                <button id="btn-sau" onclick="chuyenCau(1)" style="display: none;">Câu Tiếp ➡</button>
+                <button id="btn-truoc" onclick="chuyenTrang(-1)" style="display: none;">⬅ Trang Trước</button>
+                <button id="btn-sau" onclick="chuyenTrang(1)" style="display: none;">Trang Tiếp ➡</button>
             </div>
 
             <button onclick="nopBai(false)" id="nut-nop-bai">NỘP BÀI</button>
@@ -118,13 +118,14 @@
         let dongHoDemNguoc;
         let thoiGianBatDauStr = "";
         let danhSachViPham = [];
-        let daCanhBaoPhutCuoi = false; // Biến kiểm tra đã kêu bíp 1 phút cuối chưa
+        let daCanhBaoPhutCuoi = false; 
 
-        // --- CÁC BIẾN CHO CHIA TRANG VÀ LỌC CÂU HỎI ---
+        // --- CÁC BIẾN CHO CHIA TRANG (5 CÂU/TRANG) ---
         let danhSachCauHoiThi = []; 
-        let viTriCauHoiHienTai = 0;
+        let trangHienTai = 0;
+        const soCauMoiTrang = 5;
 
-        // --- HÀM TẠO ÂM THANH (KHÔNG CẦN TẢI FILE) ---
+        // --- HÀM TẠO ÂM THANH ---
         function phatAmThanh(loai) {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -134,7 +135,6 @@
                 gain.connect(ctx.destination);
                 
                 if (loai === 'vi-pham') {
-                    // Âm thanh bíp chói tai báo lỗi
                     osc.type = 'square';
                     osc.frequency.setValueAtTime(300, ctx.currentTime);
                     osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.1);
@@ -142,7 +142,6 @@
                     osc.start();
                     osc.stop(ctx.currentTime + 0.3);
                 } else if (loai === 'canh-bao-gio') {
-                    // Âm thanh bíp dồn dập báo sắp hết giờ
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(1000, ctx.currentTime);
                     gain.gain.setValueAtTime(0.1, ctx.currentTime);
@@ -197,12 +196,11 @@
             let container = document.getElementById("danh-sach-cau-hoi");
             let htmlString = "";
             
-            // In sẵn tất cả các câu hỏi ra nhưng dùng CSS ẩn đi (chỉ hiện câu đầu tiên)
+            // In sẵn tất cả các câu hỏi ra nhưng dùng CSS ẩn đi ban đầu
             danhSachCauHoiThi.forEach((ch, index) => {
                 let dapAnDaTron = tronMang([...ch.cacDapAn]); 
-                let displayStyle = index === 0 ? "block" : "none";
                 
-                htmlString += `<div class="cau-hoi-box" id="cau-${index}" style="display: ${displayStyle};">
+                htmlString += `<div class="cau-hoi-box" id="cau-${index}" style="display: none;">
                                   <h3>Câu ${index + 1}/${danhSachCauHoiThi.length}: ${ch.cauHoi}</h3>
                                   <div class="dap-an-box">`;
                 dapAnDaTron.forEach(da => {
@@ -213,24 +211,49 @@
                 htmlString += `</div></div>`;
             });
             container.innerHTML = htmlString;
+            
+            // Hiển thị trang đầu tiên (Trang 0)
+            trangHienTai = 0;
+            hienThiTrang(trangHienTai);
+        }
+
+        // --- CÁC HÀM ĐIỀU KHIỂN TRANG MỚI ---
+        function hienThiTrang(trang) {
+            trangHienTai = trang;
+            let batDau = trangHienTai * soCauMoiTrang;
+            let ketThuc = batDau + soCauMoiTrang;
+
+            danhSachCauHoiThi.forEach((ch, index) => {
+                let cauHoiDiv = document.getElementById(`cau-${index}`);
+                if (cauHoiDiv) {
+                    if (index >= batDau && index < ketThuc) {
+                        cauHoiDiv.style.display = "block"; // Hiển thị 5 câu thuộc trang này
+                    } else {
+                        cauHoiDiv.style.display = "none"; // Ẩn các câu khác
+                    }
+                }
+            });
             capNhatNutDieuHuong();
         }
 
-        // Hàm chuyển trang câu hỏi
-        function chuyenCau(buoc) {
-            document.getElementById(`cau-${viTriCauHoiHienTai}`).style.display = "none";
-            viTriCauHoiHienTai += buoc;
-            document.getElementById(`cau-${viTriCauHoiHienTai}`).style.display = "block";
-            capNhatNutDieuHuong();
+        function chuyenTrang(buoc) {
+            let tongSoTrang = Math.ceil(danhSachCauHoiThi.length / soCauMoiTrang);
+            let trangMoi = trangHienTai + buoc;
+            
+            if (trangMoi >= 0 && trangMoi < tongSoTrang) {
+                hienThiTrang(trangMoi);
+                // Cuộn lên đầu vùng làm bài khi sang trang mới
+                document.getElementById('phan-khung-chinh').scrollIntoView({ behavior: 'smooth' });
+            }
         }
 
-        // Cập nhật trạng thái hiển thị của nút "Câu trước" / "Câu tiếp"
         function capNhatNutDieuHuong() {
-            let tongSoCau = danhSachCauHoiThi.length;
-            document.getElementById("btn-truoc").style.display = viTriCauHoiHienTai === 0 ? "none" : "block";
-            document.getElementById("btn-sau").style.display = viTriCauHoiHienTai === tongSoCau - 1 ? "none" : "block";
+            let tongSoTrang = Math.ceil(danhSachCauHoiThi.length / soCauMoiTrang);
+            document.getElementById("btn-truoc").style.display = trangHienTai === 0 ? "none" : "block";
+            document.getElementById("btn-sau").style.display = trangHienTai === tongSoTrang - 1 ? "none" : "block";
         }
 
+        // --- ĐỒNG HỒ VÀ XỬ LÝ VI PHẠM ---
         function batDauDongHo() {
             dongHoDemNguoc = setInterval(() => {
                 thoiGian--;
@@ -239,7 +262,7 @@
                 let textDongHo = document.getElementById("dong-ho");
                 textDongHo.innerText = `${phut}:${giay < 10 ? '0' : ''}${giay}`;
                 
-                // Cảnh báo âm thanh khi còn dưới 1 phút (60 giây)
+                // Cảnh báo âm thanh khi còn dưới 1 phút
                 if (thoiGian <= 60 && !daCanhBaoPhutCuoi) {
                     textDongHo.style.color = "red";
                     phatAmThanh('canh-bao-gio');
@@ -261,14 +284,13 @@
         });
 
         function xyLyViPham(lyDo) {
-            phatAmThanh('vi-pham'); // Phát tiếng bíp cảnh báo
+            phatAmThanh('vi-pham'); 
             soLanViPham++;
             let thoiDiemViPham = new Date().toLocaleTimeString('vi-VN');
             danhSachViPham.push(`- Lần ${soLanViPham} (${thoiDiemViPham}): ${lyDo}`);
             
             document.getElementById("so-lan-canh-bao").innerText = soLanViPham;
             
-            // Dùng setTimeout để âm thanh kịp phát ra trước khi Alert chặn luồng web
             setTimeout(() => {
                 if (soLanViPham >= 3) {
                     alert("Bạn đã vi phạm quy chế thi 3 lần. Hệ thống tự động thu bài!");
@@ -301,7 +323,7 @@
             let thoiGianLamBaiStr = `${phut} phút ${giay} giây`;
             
             let diem = 0;
-            let diemMoiCau = 10 / danhSachCauHoiThi.length; // Điểm chia đều cho 20 câu
+            let diemMoiCau = 10 / danhSachCauHoiThi.length; 
             let danhSachSai = [];
 
             danhSachCauHoiThi.forEach(ch => {
