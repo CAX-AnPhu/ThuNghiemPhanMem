@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>CÔNG AN XÃ AN PHÚ</title>
+    <style>
+        body { 
+            font-family: 'Times New Roman', Times, serif; 
+            margin: 0; 
+            padding: 20px; 
+            background-image: url('taixuong.png');
+            background-size: cover; 
+            background-attachment: fixed; 
+            background-position: center; 
+        }
+        .container { width: 100%; max-width: 800px; margin: 6vh auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        h1, h2, h3 { color: #2c3e50; text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { background-color: #2980b9; color: white; padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; margin-top: 10px; }
+        button:hover { background-color: #3498db; }
+        button:disabled { background-color: #95a5a6; cursor: not-allowed; }
+        
+        #man-hinh-thi, #man-hinh-ket-qua { display: none; }
+        .thong-tin-thi { display: flex; justify-content: space-between; background: #e8f8f5; padding: 15px; border-radius: 5px; margin-bottom: 20px; font-weight: bold; color: #d35400; border: 1px solid #1abc9c; }
+        .cau-hoi-box { margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px dashed #bdc3c7; }
+        .dap-an-box label { display: block; padding: 12px; background: #f9f9f9; margin-bottom: 8px; border-radius: 4px; cursor: pointer; border: 1px solid #eee; transition: 0.2s; }
+        .dap-an-box label:hover { background: #e0f7fa; border-color: #00bcd4; }
+        .canh-bao { color: red; text-align: center; font-weight: bold; font-size: 14px; }
+        
+        /* Cụm nút điều hướng chia trang */
+        .dieu-huong { display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .dieu-huong button { width: 48%; margin-top: 0; }
+        #btn-truoc { background-color: #7f8c8d; }
+        #btn-truoc:hover { background-color: #95a5a6; }
+        #nut-nop-bai { background-color: #e74c3c; margin-top: 20px; }
+        #nut-nop-bai:hover { background-color: #c0392b; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="man-hinh-dang-nhap">
+            <h2>CÔNG AN XÃ AN PHÚ</h2>
+            <div class="form-group">
+                <label>Họ và tên thí sinh:</label>
+                <input type="text" id="hoTen" placeholder="Nhập đầy đủ họ tên">
+            </div>
+            <div class="form-group">
+                <label>Đơn vị công tác:</label>
+                <input type="text" id="donVi" placeholder="Ví dụ: Tổ Cảnh sát khu vực">
+            </div>
+            <button onclick="batDauThi()">BẮT ĐẦU THI</button>
+            <p class="canh-bao">Lưu ý: Hệ thống sẽ ghi nhận lịch sử thoát tab và thoát toàn màn hình. Quá 3 lần sẽ tự động thu bài!</p>
+        </div>
+
+        <div id="man-hinh-thi">
+            <div class="thong-tin-thi">
+                <span>Thời gian: <span id="dong-ho">15:00</span></span>
+                <span>Cảnh báo: <span id="so-lan-canh-bao">0</span>/3</span>
+            </div>
+            
+            <div id="danh-sach-cau-hoi"></div>
+            
+            <div class="dieu-huong">
+                <button id="btn-truoc" onclick="chuyenCau(-1)" style="display: none;">⬅ Câu Trước</button>
+                <button id="btn-sau" onclick="chuyenCau(1)" style="display: none;">Câu Tiếp ➡</button>
+            </div>
+
+            <button onclick="nopBai(false)" id="nut-nop-bai">NỘP BÀI</button>
+        </div>
+
+        <div id="man-hinh-ket-qua">
+            <h2>BẠN ĐÃ HOÀN THÀNH BÀI THI</h2>
+            <h1 id="diem-so" style="color: #27ae60; font-size: 48px;">0 Điểm</h1>
+            <p id="thong-bao-luu" style="text-align: center; color: #e67e22; font-weight: bold;">Đang đồng bộ dữ liệu lên hệ thống...</p>
+        </div>
+    </div>
+
+    <script>
+        let nganHangCauHoi = [];
+        const linkDauVao = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRGmulOfhVf3lLS3BwvTz2YUNqBiST0cDVW-lllfv6uEpyPhLGX8TonJTMv9XFg-yoHqZz4L08-ZVhi/pub?output=tsv";
+
+        async function taiDuLieuTuExcel() {
+            try {
+                const response = await fetch(linkDauVao);
+                const data = await response.text();
+                const cacHang = data.split('\n');
+                
+                for (let i = 1; i < cacHang.length; i++) {
+                    let hangHienTai = cacHang[i].trim();
+                    if (hangHienTai === "") continue;
+                    
+                    const cot = hangHienTai.split('\t');
+                    if (cot.length >= 8) {
+                        const lamSach = (chuoi) => chuoi ? chuoi.trim().replace(/^"|"$/g, '') : "";
+                        nganHangCauHoi.push({
+                            id: i, 
+                            chuDe: lamSach(cot[1]),
+                            cauHoi: lamSach(cot[2]),
+                            cacDapAn: [lamSach(cot[3]), lamSach(cot[4]), lamSach(cot[5]), lamSach(cot[6])],
+                            dapAnDung: lamSach(cot[7])
+                        });
+                    }
+                }
+                console.log("Đã tải xong dữ liệu TSV:", nganHangCauHoi);
+            } catch (error) {
+                alert("Lỗi kết nối dữ liệu! Vui lòng kiểm tra lại link Google Sheet.");
+            }
+        }
+        taiDuLieuTuExcel();
+
+        let thoiGian = 15 * 60; 
+        let tongThoiGianBanDau = thoiGian; 
+        let soLanViPham = 0;
+        let dangThi = false;
+        let dongHoDemNguoc;
+        let thoiGianBatDauStr = "";
+        let danhSachViPham = [];
+        let daCanhBaoPhutCuoi = false; // Biến kiểm tra đã kêu bíp 1 phút cuối chưa
+
+        // --- CÁC BIẾN CHO CHIA TRANG VÀ LỌC CÂU HỎI ---
+        let danhSachCauHoiThi = []; 
+        let viTriCauHoiHienTai = 0;
+
+        // --- HÀM TẠO ÂM THANH (KHÔNG CẦN TẢI FILE) ---
+        function phatAmThanh(loai) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                if (loai === 'vi-pham') {
+                    // Âm thanh bíp chói tai báo lỗi
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(300, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.3);
+                } else if (loai === 'canh-bao-gio') {
+                    // Âm thanh bíp dồn dập báo sắp hết giờ
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(1000, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.5);
+                }
+            } catch (e) {
+                console.log("Trình duyệt không hỗ trợ AudioContext");
+            }
+        }
+
+        function tronMang(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function layGioHienTai() {
+            let now = new Date();
+            return now.toLocaleTimeString('vi-VN') + " " + now.toLocaleDateString('vi-VN');
+        }
+
+        function batDauThi() {
+            let hoTen = document.getElementById("hoTen").value;
+            let donVi = document.getElementById("donVi").value;
+
+            if (hoTen.trim() === "" || donVi.trim() === "") {
+                alert("Vui lòng điền đầy đủ Họ tên và Đơn vị!");
+                return;
+            }
+
+            thoiGianBatDauStr = layGioHienTai();
+            let elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen().catch(err => console.log(err));
+            }
+
+            document.getElementById("man-hinh-dang-nhap").style.display = "none";
+            document.getElementById("man-hinh-thi").style.display = "block";
+            dangThi = true;
+
+            hienThiCauHoi();
+            batDauDongHo();
+        }
+
+        function hienThiCauHoi() {
+            // Lấy ngẫu nhiên tối đa 20 câu hỏi
+            danhSachCauHoiThi = tronMang([...nganHangCauHoi]).slice(0, 20);
+            
+            let container = document.getElementById("danh-sach-cau-hoi");
+            let htmlString = "";
+            
+            // In sẵn tất cả các câu hỏi ra nhưng dùng CSS ẩn đi (chỉ hiện câu đầu tiên)
+            danhSachCauHoiThi.forEach((ch, index) => {
+                let dapAnDaTron = tronMang([...ch.cacDapAn]); 
+                let displayStyle = index === 0 ? "block" : "none";
+                
+                htmlString += `<div class="cau-hoi-box" id="cau-${index}" style="display: ${displayStyle};">
+                                  <h3>Câu ${index + 1}/${danhSachCauHoiThi.length}: ${ch.cauHoi}</h3>
+                                  <div class="dap-an-box">`;
+                dapAnDaTron.forEach(da => {
+                    htmlString += `<label>
+                                      <input type="radio" name="cau_${ch.id}" value="${da}"> ${da}
+                                   </label>`;
+                });
+                htmlString += `</div></div>`;
+            });
+            container.innerHTML = htmlString;
+            capNhatNutDieuHuong();
+        }
+
+        // Hàm chuyển trang câu hỏi
+        function chuyenCau(buoc) {
+            document.getElementById(`cau-${viTriCauHoiHienTai}`).style.display = "none";
+            viTriCauHoiHienTai += buoc;
+            document.getElementById(`cau-${viTriCauHoiHienTai}`).style.display = "block";
+            capNhatNutDieuHuong();
+        }
+
+        // Cập nhật trạng thái hiển thị của nút "Câu trước" / "Câu tiếp"
+        function capNhatNutDieuHuong() {
+            let tongSoCau = danhSachCauHoiThi.length;
+            document.getElementById("btn-truoc").style.display = viTriCauHoiHienTai === 0 ? "none" : "block";
+            document.getElementById("btn-sau").style.display = viTriCauHoiHienTai === tongSoCau - 1 ? "none" : "block";
+        }
+
+        function batDauDongHo() {
+            dongHoDemNguoc = setInterval(() => {
+                thoiGian--;
+                let phut = Math.floor(thoiGian / 60);
+                let giay = thoiGian % 60;
+                let textDongHo = document.getElementById("dong-ho");
+                textDongHo.innerText = `${phut}:${giay < 10 ? '0' : ''}${giay}`;
+                
+                // Cảnh báo âm thanh khi còn dưới 1 phút (60 giây)
+                if (thoiGian <= 60 && !daCanhBaoPhutCuoi) {
+                    textDongHo.style.color = "red";
+                    phatAmThanh('canh-bao-gio');
+                    daCanhBaoPhutCuoi = true;
+                }
+                
+                if (thoiGian <= 0) {
+                    nopBai(true);
+                }
+            }, 1000);
+        }
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden && dangThi) xyLyViPham("Chuyển tab hoặc mở ứng dụng khác");
+        });
+
+        document.addEventListener("fullscreenchange", () => {
+            if (!document.fullscreenElement && dangThi) xyLyViPham("Thoát chế độ toàn màn hình");
+        });
+
+        function xyLyViPham(lyDo) {
+            phatAmThanh('vi-pham'); // Phát tiếng bíp cảnh báo
+            soLanViPham++;
+            let thoiDiemViPham = new Date().toLocaleTimeString('vi-VN');
+            danhSachViPham.push(`- Lần ${soLanViPham} (${thoiDiemViPham}): ${lyDo}`);
+            
+            document.getElementById("so-lan-canh-bao").innerText = soLanViPham;
+            
+            // Dùng setTimeout để âm thanh kịp phát ra trước khi Alert chặn luồng web
+            setTimeout(() => {
+                if (soLanViPham >= 3) {
+                    alert("Bạn đã vi phạm quy chế thi 3 lần. Hệ thống tự động thu bài!");
+                    nopBai(true);
+                } else {
+                    alert(`CẢNH BÁO: ${lyDo}! (Vi phạm lần ${soLanViPham}/3)`);
+                }
+            }, 100);
+        }
+
+        function nopBai(tuDong = false) {
+            if (!tuDong) {
+                let xacNhan = confirm("Bạn có chắc chắn muốn nộp bài?");
+                if (!xacNhan) return;
+            }
+
+            dangThi = false;
+            clearInterval(dongHoDemNguoc);
+            
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(err => {}); 
+            }
+
+            document.getElementById("nut-nop-bai").disabled = true;
+            document.getElementById("nut-nop-bai").innerText = "Đang xử lý...";
+            
+            let thoiGianDaLam = tongThoiGianBanDau - (thoiGian < 0 ? 0 : thoiGian);
+            let phut = Math.floor(thoiGianDaLam / 60);
+            let giay = thoiGianDaLam % 60;
+            let thoiGianLamBaiStr = `${phut} phút ${giay} giây`;
+            
+            let diem = 0;
+            let diemMoiCau = 10 / danhSachCauHoiThi.length; // Điểm chia đều cho 20 câu
+            let danhSachSai = [];
+
+            danhSachCauHoiThi.forEach(ch => {
+                let luaChon = document.querySelector(`input[name="cau_${ch.id}"]:checked`);
+                let giaTriChon = luaChon ? luaChon.value : "Bỏ trống";
+
+                if (giaTriChon === ch.dapAnDung) {
+                    diem += diemMoiCau;
+                } else {
+                    danhSachSai.push(`Hỏi: ${ch.cauHoi}\n -> Đã chọn: ${giaTriChon}\n -> Đáp án đúng: ${ch.dapAnDung}`);
+                }
+            });
+
+            let diemChinhThuc = diem.toFixed(1);
+            let chuoiCanhBao = soLanViPham > 0 ? `Tổng: ${soLanViPham} lần.\n${danhSachViPham.join("\n")}` : "Không vi phạm";
+            let chuoiCauSai = danhSachSai.length > 0 ? danhSachSai.join("\n\n") : "Tuyệt vời, không sai câu nào!";
+
+            let duLieuGoiDi = {
+                thoiGianBatDau: thoiGianBatDauStr,
+                hoTen: document.getElementById("hoTen").value,
+                donVi: document.getElementById("donVi").value,
+                diem: diemChinhThuc,
+                thoiGianHoanThanh: thoiGianLamBaiStr,
+                chiTietCanhBao: chuoiCanhBao,
+                danhSachSai: chuoiCauSai
+            };
+
+            document.getElementById("man-hinh-thi").style.display = "none";
+            document.getElementById("man-hinh-ket-qua").style.display = "block";
+            document.getElementById("diem-so").innerText = `${diemChinhThuc} Điểm`;
+
+            let linkGoogleSheet = "https://script.google.com/macros/s/AKfycbwbD37dlQGM4EEFG9f60naMsHWq5zJI8MfOHrnWxwWEJ6zwUy4YNN2d0TQu7EkOyLUK/exec";
+
+            fetch(linkGoogleSheet, {
+                method: "POST",
+                body: JSON.stringify(duLieuGoiDi)
+            }).then(response => {
+                document.getElementById("thong-bao-luu").innerText = "✔ Dữ liệu đã được lưu thành công!";
+                document.getElementById("thong-bao-luu").style.color = "#27ae60";
+            }).catch(error => {
+                document.getElementById("thong-bao-luu").innerText = "❌ Lỗi kết nối, không thể lưu dữ liệu.";
+                document.getElementById("thong-bao-luu").style.color = "red";
+            });
+        }
+    </script>
+</body>
+</html>
