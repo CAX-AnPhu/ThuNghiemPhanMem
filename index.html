@@ -126,14 +126,14 @@
                     if (hangHienTai === "") continue;
                     
                     const cot = hangHienTai.split('\t');
-                    if (cot.length >= 8) {
+                    if (cot.length >= 7) {
                         const lamSach = (chuoi) => chuoi ? chuoi.trim().replace(/^"|"$/g, '') : "";
                         nganHangCauHoi.push({
                             id: i, 
                             chuDe: lamSach(cot[1]),
                             cauHoi: lamSach(cot[2]),
-                            cacDapAn: [lamSach(cot[3]), lamSach(cot[4]), lamSach(cot[5]), lamSach(cot[6])],
-                            dapAnDung: lamSach(cot[7])
+                            cacDapAn: [lamSach(cot[3]), lamSach(cot[4]), lamSach(cot[5])],
+                            dapAnDung: lamSach(cot[6])
                         });
                     }
                 }
