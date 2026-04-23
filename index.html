@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CÔNG AN XÃ AN PHÚ</title>
+    <style>
+        body { 
+            font-family: 'Times New Roman', Times, serif; 
+            margin: 0; 
+            padding: 20px; 
+            background-image: url('Hinhnenweb.ipg');
+            background-size: cover; 
+            background-attachment: fixed; 
+            background-position: center; 
+        }
+        .container { 
+            width: 100%; 
+            max-width: 700px; 
+            margin: 4vh auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
+            box-sizing: border-box; /* Sửa lỗi tràn viền */
+        }
+        h1, h2, h3 { color: #2c3e50; text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 16px; }
+        button { background-color: #2980b9; color: white; padding: 14px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; margin-top: 10px; }
+        button:hover { background-color: #3498db; }
+        button:disabled { background-color: #95a5a6; cursor: not-allowed; }
+        
+        #man-hinh-thi, #man-hinh-ket-qua { display: none; }
+        .thong-tin-thi { display: flex; justify-content: space-between; background: #e8f8f5; padding: 15px; border-radius: 5px; margin-bottom: 20px; font-weight: bold; color: #d35400; border: 1px solid #1abc9c; }
+        .cau-hoi-box { margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px dashed #bdc3c7; }
+        
+        /* Tối ưu nút bấm đáp án cho màn hình cảm ứng */
+        .dap-an-box label { 
+            display: block; 
+            padding: 15px 12px; /* Tăng padding để ngón tay dễ chạm */
+            background: #f9f9f9; 
+            margin-bottom: 10px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            border: 1px solid #ddd; 
+            transition: 0.2s; 
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+        }
+        .dap-an-box input[type="radio"] { margin-right: 10px; transform: scale(1.2); } /* Phóng to nút tròn radio */
+        .dap-an-box label:hover, .dap-an-box label:active { background: #e0f7fa; border-color: #00bcd4; }
+        .canh-bao { color: red; text-align: center; font-weight: bold; font-size: 14px; line-height: 1.5; }
+        
+        .dieu-huong { display: flex; justify-content: space-between; margin-bottom: 20px; gap: 10px; }
+        .dieu-huong button { width: 48%; margin-top: 0; }
+        #btn-truoc { background-color: #7f8c8d; }
+        #btn-truoc:hover { background-color: #95a5a6; }
+        #nut-nop-bai { background-color: #e74c3c; margin-top: 20px; }
+        #nut-nop-bai:hover { background-color: #c0392b; }
+
+        /* TÙY CHỈNH RIÊNG CHO ĐIỆN THOẠI NHỎ */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .container { padding: 20px 15px; margin: 2vh auto; }
+            h2 { font-size: 22px; }
+            h3 { font-size: 18px; text-align: left; }
+            .thong-tin-thi { flex-direction: column; text-align: center; gap: 10px; font-size: 18px;}
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="phan-khung-chinh">
+        <div id="man-hinh-dang-nhap">
+            <h2>CÔNG AN XÃ AN PHÚ</h2>
+            <div class="form-group">
+                <label>Họ và tên thí sinh:</label>
+                <input type="text" id="hoTen" placeholder="Nhập đầy đủ họ tên">
+            </div>
+            <div class="form-group">
+                <label>Đơn vị công tác:</label>
+                <input type="text" id="donVi" placeholder="Ví dụ: Tổ Cảnh sát khu vực">
+            </div>
+            <button onclick="batDauThi()">BẮT ĐẦU THI</button>
+            <p class="canh-bao">Lưu ý: Hệ thống ghi nhận lịch sử thoát ứng dụng/chuyển tab. Quá 3 lần sẽ tự động thu bài!</p>
+        </div>
+
+        <div id="man-hinh-thi">
+            <div class="thong-tin-thi">
+                <span>Thời gian: <span id="dong-ho">10:00</span></span>
+                <span>Cảnh báo: <span id="so-lan-canh-bao">0</span>/3</span>
+            </div>
+            
+            <div id="danh-sach-cau-hoi"></div>
+            
+            <div class="dieu-huong">
+                <button id="btn-truoc" onclick="chuyenTrang(-1)" style="display: none;">⬅ Trang Trước</button>
+                <button id="btn-sau" onclick="chuyenTrang(1)" style="display: none;">Trang Tiếp ➡</button>
+            </div>
+
+            <button onclick="nopBai(false)" id="nut-nop-bai">NỘP BÀI TỰ NGUYỆN</button>
+        </div>
+
+        <div id="man-hinh-ket-qua">
+            <h2>BẠN ĐÃ HOÀN THÀNH BÀI THI</h2>
+            <h1 id="diem-so" style="color: #27ae60; font-size: 48px;">0 Điểm</h1>
+            <p id="thong-bao-luu" style="text-align: center; color: #e67e22; font-weight: bold;">Đang đồng bộ dữ liệu lên hệ thống...</p>
+        </div>
+    </div>
+
+    <script>
+        let nganHangCauHoi = [];
+        const linkDauVao = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRGmulOfhVf3lLS3BwvTz2YUNqBiST0cDVW-lllfv6uEpyPhLGX8TonJTMv9XFg-yoHqZz4L08-ZVhi/pub?output=tsv";
+
+        async function taiDuLieuTuExcel() {
+            try {
+        // Thêm đuôi thời gian ngẫu nhiên để ép trình duyệt tải dữ liệu mới 100%
+                const linkChongCache = linkDauVao + "&time=" + new Date().getTime();
+                const response = await fetch(linkChongCache, { cache: "no-store" });
+                const data = await response.text();
+                const cacHang = data.split('\n');
+                
+                for (let i = 1; i < cacHang.length; i++) {
+                    let hangHienTai = cacHang[i].trim();
+                    if (hangHienTai === "") continue;
+                    
+                    const cot = hangHienTai.split('\t');
+                    if (cot.length >= 7) {
+                        const lamSach = (chuoi) => chuoi ? chuoi.trim().replace(/^"|"$/g, '') : "";
+                        nganHangCauHoi.push({
+                            id: i, 
+                            chuDe: lamSach(cot[1]),
+                            cauHoi: lamSach(cot[2]),
+                            cacDapAn: [lamSach(cot[3]), lamSach(cot[4]), lamSach(cot[5])],
+                            dapAnDung: lamSach(cot[6])
+                        });
+                    }
+                }
+            } catch (error) {
+                alert("Lỗi kết nối dữ liệu! Vui lòng kiểm tra lại link Google Sheet.");
+            }
+        }
+        taiDuLieuTuExcel();
+
+        let thoiGian = 10 * 60; // 10 phút
+        let tongThoiGianBanDau = thoiGian; 
+        let soLanViPham = 0;
+        let dangThi = false;
+        let dongHoDemNguoc;
+        let thoiGianBatDauStr = "";
+        let danhSachViPham = [];
+        let daCanhBaoPhutCuoi = false; 
+
+        let danhSachCauHoiThi = []; 
+        let trangHienTai = 0;
+        const soCauMoiTrang = 5;
+
+        // Biến toàn cục quản lý âm thanh (Đã tối ưu cho Mobile)
+        let audioCtx;
+
+        function khoiTaoAmThanh() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+                // Phát một âm thanh im lặng để "Mở khóa" quyền phát âm thanh trên Safari/Chrome mobile
+                const osc = audioCtx.createOscillator();
+                osc.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.001);
+            }
+        }
+
+        function phatAmThanh(loai) {
+            if (!audioCtx || audioCtx.state === 'suspended') return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                if (loai === 'vi-pham') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                } else if (loai === 'canh-bao-gio') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.5);
+                }
+            } catch (e) { console.log(e); }
+        }
+
+        function tronMang(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function layGioHienTai() {
+            let now = new Date();
+            return now.toLocaleTimeString('vi-VN') + " " + now.toLocaleDateString('vi-VN');
+        }
+
+        function batDauThi() {
+            let hoTen = document.getElementById("hoTen").value;
+            let donVi = document.getElementById("donVi").value;
+
+            if (hoTen.trim() === "" || donVi.trim() === "") {
+                alert("Vui lòng điền đầy đủ Họ tên và Đơn vị!");
+                return;
+            }
+
+            khoiTaoAmThanh(); // Mở khóa âm thanh khi người dùng chủ động bấm nút
+
+            thoiGianBatDauStr = layGioHienTai();
+            let elem = document.documentElement;
+            
+            // Tối ưu Fullscreen để không báo lỗi trên iOS Safari
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen().catch(err => console.log("Thiết bị không hỗ trợ Fullscreen"));
+            } else if (elem.webkitRequestFullscreen) { /* Dành riêng cho Safari */
+                elem.webkitRequestFullscreen();
+            }
+
+            document.getElementById("man-hinh-dang-nhap").style.display = "none";
+            document.getElementById("man-hinh-thi").style.display = "block";
+            dangThi = true;
+
+            hienThiCauHoi();
+            batDauDongHo();
+        }
+
+        function hienThiCauHoi() {
+            danhSachCauHoiThi = tronMang([...nganHangCauHoi]).slice(0, 20);
+            let container = document.getElementById("danh-sach-cau-hoi");
+            let htmlString = "";
+            
+            danhSachCauHoiThi.forEach((ch, index) => {
+                let dapAnDaTron = tronMang([...ch.cacDapAn]); 
+                htmlString += `<div class="cau-hoi-box" id="cau-${index}" style="display: none;">
+                                  <h3>Câu ${index + 1}/${danhSachCauHoiThi.length}: ${ch.cauHoi}</h3>
+                                  <div class="dap-an-box">`;
+                dapAnDaTron.forEach(da => {
+                    htmlString += `<label>
+                                      <input type="radio" name="cau_${ch.id}" value="${da}"> ${da}
+                                   </label>`;
+                });
+                htmlString += `</div></div>`;
+            });
+            container.innerHTML = htmlString;
+            
+            trangHienTai = 0;
+            hienThiTrang(trangHienTai);
+        }
+
+        function hienThiTrang(trang) {
+            trangHienTai = trang;
+            let batDau = trangHienTai * soCauMoiTrang;
+            let ketThuc = batDau + soCauMoiTrang;
+
+            danhSachCauHoiThi.forEach((ch, index) => {
+                let cauHoiDiv = document.getElementById(`cau-${index}`);
+                if (cauHoiDiv) {
+                    if (index >= batDau && index < ketThuc) {
+                        cauHoiDiv.style.display = "block"; 
+                    } else {
+                        cauHoiDiv.style.display = "none"; 
+                    }
+                }
+            });
+            capNhatNutDieuHuong();
+        }
+
+        function chuyenTrang(buoc) {
+            let tongSoTrang = Math.ceil(danhSachCauHoiThi.length / soCauMoiTrang);
+            let trangMoi = trangHienTai + buoc;
+            
+            if (trangMoi >= 0 && trangMoi < tongSoTrang) {
+                hienThiTrang(trangMoi);
+                document.getElementById('phan-khung-chinh').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function capNhatNutDieuHuong() {
+            let tongSoTrang = Math.ceil(danhSachCauHoiThi.length / soCauMoiTrang);
+            document.getElementById("btn-truoc").style.display = trangHienTai === 0 ? "none" : "block";
+            document.getElementById("btn-sau").style.display = trangHienTai === tongSoTrang - 1 ? "none" : "block";
+        }
+
+        function batDauDongHo() {
+            dongHoDemNguoc = setInterval(() => {
+                thoiGian--;
+                let phut = Math.floor(thoiGian / 60);
+                let giay = thoiGian % 60;
+                let textDongHo = document.getElementById("dong-ho");
+                textDongHo.innerText = `${phut < 10 ? '0' : ''}${phut}:${giay < 10 ? '0' : ''}${giay}`;
+                
+                if (thoiGian <= 60 && !daCanhBaoPhutCuoi) {
+                    textDongHo.style.color = "red";
+                    phatAmThanh('canh-bao-gio');
+                    daCanhBaoPhutCuoi = true;
+                }
+                
+                if (thoiGian <= 0) {
+                    nopBai(true);
+                }
+            }, 1000);
+        }
+
+        // Bắt lỗi chuyển tab/ứng dụng khác (Hoạt động tốt trên cả điện thoại)
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden && dangThi) xyLyViPham("Chuyển sang ứng dụng hoặc tab khác");
+        });
+
+        // Bắt lỗi thoát toàn màn hình (Bỏ qua nếu là thiết bị không hỗ trợ API này)
+        document.addEventListener("fullscreenchange", () => {
+            if (!document.fullscreenElement && dangThi && document.fullscreenEnabled) {
+                xyLyViPham("Thoát chế độ toàn màn hình");
+            }
+        });
+
+        function xyLyViPham(lyDo) {
+            phatAmThanh('vi-pham'); 
+            soLanViPham++;
+            let thoiDiemViPham = new Date().toLocaleTimeString('vi-VN');
+            danhSachViPham.push(`- Lần ${soLanViPham} (${thoiDiemViPham}): ${lyDo}`);
+            
+            document.getElementById("so-lan-canh-bao").innerText = soLanViPham;
+            
+            setTimeout(() => {
+                if (soLanViPham >= 3) {
+                    alert("Bạn đã vi phạm quy chế thi 3 lần. Hệ thống tự động thu bài!");
+                    nopBai(true);
+                } else {
+                    alert(`CẢNH BÁO: ${lyDo}! (Vi phạm lần ${soLanViPham}/3)`);
+                }
+            }, 100);
+        }
+
+        function nopBai(tuDong = false) {
+            if (!tuDong) {
+                let xacNhan = confirm("Bạn có chắc chắn muốn nộp bài?");
+                if (!xacNhan) return;
+            }
+
+            dangThi = false;
+            clearInterval(dongHoDemNguoc);
+            
+            if (document.exitFullscreen && document.fullscreenElement) {
+                document.exitFullscreen().catch(err => {}); 
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+
+            document.getElementById("nut-nop-bai").disabled = true;
+            document.getElementById("nut-nop-bai").innerText = "Đang xử lý...";
+            
+            let thoiGianDaLam = tongThoiGianBanDau - (thoiGian < 0 ? 0 : thoiGian);
+            let phut = Math.floor(thoiGianDaLam / 60);
+            let giay = thoiGianDaLam % 60;
+            let thoiGianLamBaiStr = `${phut} phút ${giay} giây`;
+            
+            let diem = 0;
+            let diemMoiCau = 10 / danhSachCauHoiThi.length; 
+            let danhSachSai = [];
+
+            danhSachCauHoiThi.forEach(ch => {
+                let luaChon = document.querySelector(`input[name="cau_${ch.id}"]:checked`);
+                let giaTriChon = luaChon ? luaChon.value : "Bỏ trống";
+
+                if (giaTriChon === ch.dapAnDung) {
+                    diem += diemMoiCau;
+                } else {
+                    danhSachSai.push(`Hỏi: ${ch.cauHoi}\n -> Đã chọn: ${giaTriChon}\n -> Đáp án đúng: ${ch.dapAnDung}`);
+                }
+            });
+
+            let diemChinhThuc = diem.toFixed(1);
+            let chuoiCanhBao = soLanViPham > 0 ? `Tổng: ${soLanViPham} lần.\n${danhSachViPham.join("\n")}` : "Không vi phạm";
+            let chuoiCauSai = danhSachSai.length > 0 ? danhSachSai.join("\n\n") : "Tuyệt vời, không sai câu nào!";
+
+            let duLieuGoiDi = {
+                thoiGianBatDau: thoiGianBatDauStr,
+                hoTen: document.getElementById("hoTen").value,
+                donVi: document.getElementById("donVi").value,
+                diem: diemChinhThuc,
+                thoiGianHoanThanh: thoiGianLamBaiStr,
+                chiTietCanhBao: chuoiCanhBao,
+                danhSachSai: chuoiCauSai
+            };
+
+            document.getElementById("man-hinh-thi").style.display = "none";
+            document.getElementById("man-hinh-ket-qua").style.display = "block";
+            document.getElementById("diem-so").innerText = `${diemChinhThuc} Điểm`;
+
+            let linkGoogleSheet = "https://script.google.com/macros/s/AKfycbwbD37dlQGM4EEFG9f60naMsHWq5zJI8MfOHrnWxwWEJ6zwUy4YNN2d0TQu7EkOyLUK/exec";
+
+            fetch(linkGoogleSheet, {
+                method: "POST",
+                body: JSON.stringify(duLieuGoiDi)
+            }).then(response => {
+                document.getElementById("thong-bao-luu").innerText = "✔ Dữ liệu đã được lưu thành công!";
+                document.getElementById("thong-bao-luu").style.color = "#27ae60";
+            }).catch(error => {
+                document.getElementById("thong-bao-luu").innerText = "❌ Lỗi kết nối, không thể lưu dữ liệu.";
+                document.getElementById("thong-bao-luu").style.color = "red";
+            });
+        }
+    </script>
+</body>
+</html>
