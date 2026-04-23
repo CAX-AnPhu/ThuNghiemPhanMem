@@ -5,14 +5,15 @@
     <title>CÔNG AN XÃ AN PHÚ</title>
     <style>
         body { 
-            font-family: 'Times New Roman', Times, serif; 
-            margin: 0; 
-            padding: 20px; 
-            background-image: url('taixuong.png');
-            background-size: cover; 
-            background-attachment: fixed; 
-            background-position: center; 
-        }
+    font-family: 'Times New Roman', Times, serif; 
+    margin: 0; 
+    padding: 20px; 
+    /* ---- ĐOẠN LỆNH THÊM ẢNH NỀN ---- */
+    background-image: url('hinhnenweb.jpg');
+    background-size: cover; 
+    background-attachment: fixed; 
+    background-position: center; 
+}
         .container { width: 100%; max-width: 800px; margin: 6vh auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         h1, h2, h3 { color: #2c3e50; text-align: center; }
         .form-group { margin-bottom: 15px; }
@@ -20,27 +21,17 @@
         .form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
         button { background-color: #2980b9; color: white; padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; margin-top: 10px; }
         button:hover { background-color: #3498db; }
-        button:disabled { background-color: #95a5a6; cursor: not-allowed; }
-        
         #man-hinh-thi, #man-hinh-ket-qua { display: none; }
         .thong-tin-thi { display: flex; justify-content: space-between; background: #e8f8f5; padding: 15px; border-radius: 5px; margin-bottom: 20px; font-weight: bold; color: #d35400; border: 1px solid #1abc9c; }
         .cau-hoi-box { margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px dashed #bdc3c7; }
-        .dap-an-box label { display: block; padding: 12px; background: #f9f9f9; margin-bottom: 8px; border-radius: 4px; cursor: pointer; border: 1px solid #eee; transition: 0.2s; }
-        .dap-an-box label:hover { background: #e0f7fa; border-color: #00bcd4; }
+        .dap-an-box label { display: block; padding: 8px; background: #f9f9f9; margin-bottom: 5px; border-radius: 4px; cursor: pointer; }
+        .dap-an-box label:hover { background: #e0f7fa; }
         .canh-bao { color: red; text-align: center; font-weight: bold; font-size: 14px; }
-        
-        /* Cụm nút điều hướng chia trang */
-        .dieu-huong { display: flex; justify-content: space-between; margin-bottom: 20px; }
-        .dieu-huong button { width: 48%; margin-top: 0; }
-        #btn-truoc { background-color: #7f8c8d; }
-        #btn-truoc:hover { background-color: #95a5a6; }
-        #nut-nop-bai { background-color: #e74c3c; margin-top: 20px; }
-        #nut-nop-bai:hover { background-color: #c0392b; }
     </style>
 </head>
 <body>
 
-    <div class="container" id="phan-khung-chinh">
+    <div class="container">
         <div id="man-hinh-dang-nhap">
             <h2>CÔNG AN XÃ AN PHÚ</h2>
             <div class="form-group">
@@ -57,18 +48,11 @@
 
         <div id="man-hinh-thi">
             <div class="thong-tin-thi">
-                <span>Thời gian: <span id="dong-ho">10:00</span></span>
+                <span>Thời gian: <span id="dong-ho">15:00</span></span>
                 <span>Cảnh báo: <span id="so-lan-canh-bao">0</span>/3</span>
             </div>
-            
             <div id="danh-sach-cau-hoi"></div>
-            
-            <div class="dieu-huong">
-                <button id="btn-truoc" onclick="chuyenTrang(-1)" style="display: none;">⬅ Trang Trước</button>
-                <button id="btn-sau" onclick="chuyenTrang(1)" style="display: none;">Trang Tiếp ➡</button>
-            </div>
-
-            <button onclick="nopBai(false)" id="nut-nop-bai">NỘP BÀI</button>
+            <button onclick="nopBai(false)" id="nut-nop-bai">Nộp Bài</button>
         </div>
 
         <div id="man-hinh-ket-qua">
@@ -79,79 +63,60 @@
     </div>
 
     <script>
-        let nganHangCauHoi = [];
-        const linkDauVao = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRGmulOfhVf3lLS3BwvTz2YUNqBiST0cDVW-lllfv6uEpyPhLGX8TonJTMv9XFg-yoHqZz4L08-ZVhi/pub?output=tsv";
+        // Biến lưu trữ ngân hàng câu hỏi sẽ được tải về tự động
+let nganHangCauHoi = [];
 
-        async function taiDuLieuTuExcel() {
-            try {
-                const response = await fetch(linkDauVao);
-                const data = await response.text();
-                const cacHang = data.split('\n');
-                
-                for (let i = 1; i < cacHang.length; i++) {
-                    let hangHienTai = cacHang[i].trim();
-                    if (hangHienTai === "") continue;
-                    
-                    const cot = hangHienTai.split('\t');
-                    if (cot.length >= 7) {
-                        const lamSach = (chuoi) => chuoi ? chuoi.trim().replace(/^"|"$/g, '') : "";
-                        nganHangCauHoi.push({
-                            id: i, 
-                            chuDe: lamSach(cot[1]),
-                            cauHoi: lamSach(cot[2]),
-                            cacDapAn: [lamSach(cot[3]), lamSach(cot[4]), lamSach(cot[5])],
-                            dapAnDung: lamSach(cot[6])
-                        });
-                    }
-                }
-                console.log("Đã tải xong dữ liệu TSV:", nganHangCauHoi);
-            } catch (error) {
-                alert("Lỗi kết nối dữ liệu! Vui lòng kiểm tra lại link Google Sheet.");
+// DÁN ĐƯỜNG LINK "=tsv" BẠN VỪA COPY VÀO ĐÂY:
+const linkDauVao = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRGmulOfhVf3lLS3BwvTz2YUNqBiST0cDVW-lllfv6uEpyPhLGX8TonJTMv9XFg-yoHqZz4L08-ZVhi/pub?output=tsv";
+
+// Hàm tự động tải dữ liệu và dọn rác
+async function taiDuLieuTuExcel() {
+    try {
+        const response = await fetch(linkDauVao);
+        const data = await response.text();
+        const cacHang = data.split('\n');
+        
+        for (let i = 1; i < cacHang.length; i++) {
+            let hangHienTai = cacHang[i].trim();
+            if (hangHienTai === "") continue;
+            
+            const cot = hangHienTai.split('\t');
+            
+            if (cot.length >= 8) {
+                // HÀM DỌN RÁC: Xóa khoảng trắng thừa và dấu ngoặc kép ẩn từ Google Sheet
+                const lamSach = (chuoi) => {
+                    if (!chuoi) return "";
+                    return chuoi.trim().replace(/^"|"$/g, '');
+                };
+
+                nganHangCauHoi.push({
+                    // Ép dùng số thứ tự i làm ID, triệt tiêu hoàn toàn lỗi trùng ID trên Sheet
+                    id: i, 
+                    chuDe: lamSach(cot[1]),
+                    cauHoi: lamSach(cot[2]),
+                    cacDapAn: [lamSach(cot[3]), lamSach(cot[4]), lamSach(cot[5]), lamSach(cot[6])],
+                    dapAnDung: lamSach(cot[7]) // Cột H
+                });
             }
         }
-        taiDuLieuTuExcel();
+        console.log("Đã tải và dọn dẹp xong dữ liệu TSV:", nganHangCauHoi);
+        
+    } catch (error) {
+        alert("Lỗi kết nối dữ liệu! Vui lòng kiểm tra lại link Google Sheet.");
+    }
+}
 
-        let thoiGian = 10 * 60; 
-        let tongThoiGianBanDau = thoiGian; 
+taiDuLieuTuExcel();
+
+        let thoiGian = 15 * 60; 
+        let tongThoiGianBanDau = thoiGian; // <-- Thêm dòng này để nhớ tổng thời gian
         let soLanViPham = 0;
         let dangThi = false;
         let dongHoDemNguoc;
+        
+        // Các biến lưu trữ dữ liệu mới
         let thoiGianBatDauStr = "";
         let danhSachViPham = [];
-        let daCanhBaoPhutCuoi = false; 
-
-        // --- CÁC BIẾN CHO CHIA TRANG (5 CÂU/TRANG) ---
-        let danhSachCauHoiThi = []; 
-        let trangHienTai = 0;
-        const soCauMoiTrang = 5;
-
-        // --- HÀM TẠO ÂM THANH ---
-        function phatAmThanh(loai) {
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                
-                if (loai === 'vi-pham') {
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(300, ctx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.1);
-                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                    osc.start();
-                    osc.stop(ctx.currentTime + 0.3);
-                } else if (loai === 'canh-bao-gio') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(1000, ctx.currentTime);
-                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                    osc.start();
-                    osc.stop(ctx.currentTime + 0.5);
-                }
-            } catch (e) {
-                console.log("Trình duyệt không hỗ trợ AudioContext");
-            }
-        }
 
         function tronMang(array) {
             for (let i = array.length - 1; i > 0; i--) {
@@ -175,7 +140,8 @@
                 return;
             }
 
-            thoiGianBatDauStr = layGioHienTai();
+            thoiGianBatDauStr = layGioHienTai(); // Ghi nhận giờ bắt đầu
+
             let elem = document.documentElement;
             if (elem.requestFullscreen) {
                 elem.requestFullscreen().catch(err => console.log(err));
@@ -190,18 +156,14 @@
         }
 
         function hienThiCauHoi() {
-            // Lấy ngẫu nhiên tối đa 20 câu hỏi
-            danhSachCauHoiThi = tronMang([...nganHangCauHoi]).slice(0, 20);
-            
             let container = document.getElementById("danh-sach-cau-hoi");
+            let cauHoiDaTron = tronMang([...nganHangCauHoi]); 
+
             let htmlString = "";
-            
-            // In sẵn tất cả các câu hỏi ra nhưng dùng CSS ẩn đi ban đầu
-            danhSachCauHoiThi.forEach((ch, index) => {
+            cauHoiDaTron.forEach((ch, index) => {
                 let dapAnDaTron = tronMang([...ch.cacDapAn]); 
-                
-                htmlString += `<div class="cau-hoi-box" id="cau-${index}" style="display: none;">
-                                  <h3>Câu ${index + 1}/${danhSachCauHoiThi.length}: ${ch.cauHoi}</h3>
+                htmlString += `<div class="cau-hoi-box">
+                                  <h3>Câu ${index + 1}: ${ch.cauHoi}</h3>
                                   <div class="dap-an-box">`;
                 dapAnDaTron.forEach(da => {
                     htmlString += `<label>
@@ -211,63 +173,14 @@
                 htmlString += `</div></div>`;
             });
             container.innerHTML = htmlString;
-            
-            // Hiển thị trang đầu tiên (Trang 0)
-            trangHienTai = 0;
-            hienThiTrang(trangHienTai);
         }
 
-        // --- CÁC HÀM ĐIỀU KHIỂN TRANG MỚI ---
-        function hienThiTrang(trang) {
-            trangHienTai = trang;
-            let batDau = trangHienTai * soCauMoiTrang;
-            let ketThuc = batDau + soCauMoiTrang;
-
-            danhSachCauHoiThi.forEach((ch, index) => {
-                let cauHoiDiv = document.getElementById(`cau-${index}`);
-                if (cauHoiDiv) {
-                    if (index >= batDau && index < ketThuc) {
-                        cauHoiDiv.style.display = "block"; // Hiển thị 5 câu thuộc trang này
-                    } else {
-                        cauHoiDiv.style.display = "none"; // Ẩn các câu khác
-                    }
-                }
-            });
-            capNhatNutDieuHuong();
-        }
-
-        function chuyenTrang(buoc) {
-            let tongSoTrang = Math.ceil(danhSachCauHoiThi.length / soCauMoiTrang);
-            let trangMoi = trangHienTai + buoc;
-            
-            if (trangMoi >= 0 && trangMoi < tongSoTrang) {
-                hienThiTrang(trangMoi);
-                // Cuộn lên đầu vùng làm bài khi sang trang mới
-                document.getElementById('phan-khung-chinh').scrollIntoView({ behavior: 'smooth' });
-            }
-        }
-
-        function capNhatNutDieuHuong() {
-            let tongSoTrang = Math.ceil(danhSachCauHoiThi.length / soCauMoiTrang);
-            document.getElementById("btn-truoc").style.display = trangHienTai === 0 ? "none" : "block";
-            document.getElementById("btn-sau").style.display = trangHienTai === tongSoTrang - 1 ? "none" : "block";
-        }
-
-        // --- ĐỒNG HỒ VÀ XỬ LÝ VI PHẠM ---
         function batDauDongHo() {
             dongHoDemNguoc = setInterval(() => {
                 thoiGian--;
                 let phut = Math.floor(thoiGian / 60);
                 let giay = thoiGian % 60;
-                let textDongHo = document.getElementById("dong-ho");
-                textDongHo.innerText = `${phut}:${giay < 10 ? '0' : ''}${giay}`;
-                
-                // Cảnh báo âm thanh khi còn dưới 1 phút
-                if (thoiGian <= 60 && !daCanhBaoPhutCuoi) {
-                    textDongHo.style.color = "red";
-                    phatAmThanh('canh-bao-gio');
-                    daCanhBaoPhutCuoi = true;
-                }
+                document.getElementById("dong-ho").innerText = `${phut}:${giay < 10 ? '0' : ''}${giay}`;
                 
                 if (thoiGian <= 0) {
                     nopBai(true);
@@ -275,6 +188,7 @@
             }, 1000);
         }
 
+        // Chống gian lận và ghi chú chi tiết lỗi
         document.addEventListener("visibilitychange", () => {
             if (document.hidden && dangThi) xyLyViPham("Chuyển tab hoặc mở ứng dụng khác");
         });
@@ -284,21 +198,18 @@
         });
 
         function xyLyViPham(lyDo) {
-            phatAmThanh('vi-pham'); 
             soLanViPham++;
             let thoiDiemViPham = new Date().toLocaleTimeString('vi-VN');
             danhSachViPham.push(`- Lần ${soLanViPham} (${thoiDiemViPham}): ${lyDo}`);
             
             document.getElementById("so-lan-canh-bao").innerText = soLanViPham;
             
-            setTimeout(() => {
-                if (soLanViPham >= 3) {
-                    alert("Bạn đã vi phạm quy chế thi 3 lần. Hệ thống tự động thu bài!");
-                    nopBai(true);
-                } else {
-                    alert(`CẢNH BÁO: ${lyDo}! (Vi phạm lần ${soLanViPham}/3)`);
-                }
-            }, 100);
+            if (soLanViPham >= 3) {
+                alert("Bạn đã vi phạm quy chế thi 3 lần. Hệ thống tự động thu bài!");
+                nopBai(true);
+            } else {
+                alert(`CẢNH BÁO: ${lyDo}! (Vi phạm lần ${soLanViPham}/3)`);
+            }
         }
 
         function nopBai(tuDong = false) {
@@ -316,17 +227,17 @@
 
             document.getElementById("nut-nop-bai").disabled = true;
             document.getElementById("nut-nop-bai").innerText = "Đang xử lý...";
-            
-            let thoiGianDaLam = tongThoiGianBanDau - (thoiGian < 0 ? 0 : thoiGian);
+            // Tính toán thời gian làm bài
+            let thoiGianDaLam = tongThoiGianBanDau - thoiGian;
             let phut = Math.floor(thoiGianDaLam / 60);
             let giay = thoiGianDaLam % 60;
             let thoiGianLamBaiStr = `${phut} phút ${giay} giây`;
-            
             let diem = 0;
-            let diemMoiCau = 10 / danhSachCauHoiThi.length; 
+            let diemMoiCau = 10 / nganHangCauHoi.length;
             let danhSachSai = [];
 
-            danhSachCauHoiThi.forEach(ch => {
+            // Chấm điểm và lọc câu sai
+            nganHangCauHoi.forEach(ch => {
                 let luaChon = document.querySelector(`input[name="cau_${ch.id}"]:checked`);
                 let giaTriChon = luaChon ? luaChon.value : "Bỏ trống";
 
@@ -338,15 +249,18 @@
             });
 
             let diemChinhThuc = diem.toFixed(1);
+            
+            // Xử lý chuỗi văn bản cảnh báo và câu sai để lưu vào Sheet
             let chuoiCanhBao = soLanViPham > 0 ? `Tổng: ${soLanViPham} lần.\n${danhSachViPham.join("\n")}` : "Không vi phạm";
             let chuoiCauSai = danhSachSai.length > 0 ? danhSachSai.join("\n\n") : "Tuyệt vời, không sai câu nào!";
 
+            // Gói dữ liệu gửi đi
             let duLieuGoiDi = {
                 thoiGianBatDau: thoiGianBatDauStr,
                 hoTen: document.getElementById("hoTen").value,
                 donVi: document.getElementById("donVi").value,
                 diem: diemChinhThuc,
-                thoiGianHoanThanh: thoiGianLamBaiStr,
+                thoiGianHoanThanh: thoiGianLamBaiStr, // <-- Đổi thành biến mới này
                 chiTietCanhBao: chuoiCanhBao,
                 danhSachSai: chuoiCauSai
             };
@@ -355,6 +269,7 @@
             document.getElementById("man-hinh-ket-qua").style.display = "block";
             document.getElementById("diem-so").innerText = `${diemChinhThuc} Điểm`;
 
+            // ===== QUAN TRỌNG: DÁN LINK WEB APP MỚI VÀO ĐÂY =====
             let linkGoogleSheet = "https://script.google.com/macros/s/AKfycbwbD37dlQGM4EEFG9f60naMsHWq5zJI8MfOHrnWxwWEJ6zwUy4YNN2d0TQu7EkOyLUK/exec";
 
             fetch(linkGoogleSheet, {
