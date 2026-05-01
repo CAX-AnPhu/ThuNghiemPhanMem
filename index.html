@@ -76,13 +76,15 @@
     <div class="container" id="phan-khung-chinh">
         <div id="man-hinh-dang-nhap">
             <h2>CÔNG AN XÃ AN PHÚ</h2>
+            <h2 style="margin-top: -10px; color: #02187a;">THI TRỰC TUYẾN "PHẦN THI KIẾN THỨC"</h2>
+            <h2 style="margin-top: -10px; color: #02187a;">HỘI THI LỰC LƯỢNG THAM GIA ANTT Ở CƠ SỞ GIỎI XÃ AN PHÚ NĂM 2026</h2>
             <div class="form-group">
                 <label>Họ và tên thí sinh:</label>
                 <input type="text" id="hoTen" placeholder="Nhập đầy đủ họ tên">
             </div>
             <div class="form-group">
                 <label>Đơn vị công tác:</label>
-                <input type="text" id="donVi" placeholder="Ví dụ: Tổ Cảnh sát khu vực">
+                <input type="text" id="donVi" placeholder="Ví dụ: thôn Cổ Lũy Làng Cá">
             </div>
             <button onclick="batDauThi()">BẮT ĐẦU THI</button>
             <p class="canh-bao">Lưu ý: Hệ thống ghi nhận lịch sử thoát ứng dụng/chuyển tab. Quá 3 lần sẽ tự động thu bài!</p>
@@ -90,7 +92,7 @@
 
         <div id="man-hinh-thi">
             <div class="thong-tin-thi">
-                <span>Thời gian: <span id="dong-ho">10:00</span></span>
+                <span>Thời gian: <span id="dong-ho">15:00</span></span>
                 <span>Cảnh báo: <span id="so-lan-canh-bao">0</span>/3</span>
             </div>
             
@@ -100,7 +102,13 @@
                 <button id="btn-truoc" onclick="chuyenTrang(-1)" style="display: none;">⬅ Trang Trước</button>
                 <button id="btn-sau" onclick="chuyenTrang(1)" style="display: none;">Trang Tiếp ➡</button>
             </div>
-
+            <!-- BẮT ĐẦU: ĐOẠN CODE PHẦN TỰ LUẬN THÊM MỚI -->
+            <div id="phan-tu-luan" style="display: none; margin-bottom: 20px; padding: 20px; background: #fff8e1; border-left: 5px solid #f1c40f; border-radius: 5px;">
+                <h3 style="text-align: left; margin-top: 0; color: #d35400;">Phần thi Tự luận:</h3>
+                <label style="font-weight: bold; margin-bottom: 10px; display: block;">Câu hỏi: Trình bày suy nghĩ của đồng chí về vai trò của chuyển đổi số trong công tác Công an?</label>
+                <textarea id="cau-tra-loi-tu-luan" rows="5" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 16px; font-family: inherit;" placeholder="Nhập câu trả lời của bạn vào đây..."></textarea>
+            </div>
+            <!-- KẾT THÚC: ĐOẠN CODE PHẦN TỰ LUẬN -->
             <button onclick="nopBai(false)" id="nut-nop-bai">NỘP BÀI</button>
         </div>
 
@@ -113,7 +121,7 @@
 
     <script>
         let nganHangCauHoi = [];
-        const linkDauVao = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRGmulOfhVf3lLS3BwvTz2YUNqBiST0cDVW-lllfv6uEpyPhLGX8TonJTMv9XFg-yoHqZz4L08-ZVhi/pub?output=tsv";
+        const linkDauVao = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6LB7Pu4t_YIWVX1Z241PGN1k61IHgUFUCistapHkNM1QWSB8YTr6kM2r9FwsQ-rRwj3HxIlOA0o6R/pub?output=tsv";
 
         async function taiDuLieuTuExcel() {
             try {
@@ -128,14 +136,14 @@
                     if (hangHienTai === "") continue;
                     
                     const cot = hangHienTai.split('\t');
-                    if (cot.length >= 7) {
+                    if (cot.length >= 8) {
                         const lamSach = (chuoi) => chuoi ? chuoi.trim().replace(/^"|"$/g, '') : "";
                         nganHangCauHoi.push({
                             id: i, 
                             chuDe: lamSach(cot[1]),
                             cauHoi: lamSach(cot[2]),
-                            cacDapAn: [lamSach(cot[3]), lamSach(cot[4]), lamSach(cot[5])],
-                            dapAnDung: lamSach(cot[6])
+                            cacDapAn: [lamSach(cot[3]), lamSach(cot[4]), lamSach(cot[5]), lamSach(cot[6])],
+                            dapAnDung: lamSach(cot[7])
                         });
                     }
                 }
@@ -145,7 +153,7 @@
         }
         taiDuLieuTuExcel();
 
-        let thoiGian = 10 * 60; // 10 phút
+        let thoiGian = 15 * 60; // 15 phút
         let tongThoiGianBanDau = thoiGian; 
         let soLanViPham = 0;
         let dangThi = false;
@@ -241,7 +249,7 @@
         }
 
         function hienThiCauHoi() {
-            danhSachCauHoiThi = tronMang([...nganHangCauHoi]).slice(0, 20);
+            danhSachCauHoiThi = tronMang([...nganHangCauHoi]).slice(0, 30);
             let container = document.getElementById("danh-sach-cau-hoi");
             let htmlString = "";
             
@@ -295,6 +303,14 @@
             let tongSoTrang = Math.ceil(danhSachCauHoiThi.length / soCauMoiTrang);
             document.getElementById("btn-truoc").style.display = trangHienTai === 0 ? "none" : "block";
             document.getElementById("btn-sau").style.display = trangHienTai === tongSoTrang - 1 ? "none" : "block";
+            
+            // Xử lý hiển thị phần tự luận ở trang cuối cùng
+            let phanTuLuan = document.getElementById("phan-tu-luan");
+            if (trangHienTai === tongSoTrang - 1) {
+                phanTuLuan.style.display = "block";
+            } else {
+                phanTuLuan.style.display = "none";
+            }
         }
 
         function batDauDongHo() {
@@ -389,6 +405,13 @@
             let chuoiCanhBao = soLanViPham > 0 ? `Tổng: ${soLanViPham} lần.\n${danhSachViPham.join("\n")}` : "Không vi phạm";
             let chuoiCauSai = danhSachSai.length > 0 ? danhSachSai.join("\n\n") : "Tuyệt vời, không sai câu nào!";
 
+            // Lấy dữ liệu thí sinh nhập vào ô tự luận
+            let baiLamTuLuan = document.getElementById("cau-tra-loi-tu-luan").value.trim();
+            if (baiLamTuLuan === "") {
+                baiLamTuLuan = "Không trả lời";
+            }
+
+            // Gói dữ liệu gửi đi (Đã thêm trường tuLuan)
             let duLieuGoiDi = {
                 thoiGianBatDau: thoiGianBatDauStr,
                 hoTen: document.getElementById("hoTen").value,
@@ -396,14 +419,15 @@
                 diem: diemChinhThuc,
                 thoiGianHoanThanh: thoiGianLamBaiStr,
                 chiTietCanhBao: chuoiCanhBao,
-                danhSachSai: chuoiCauSai
+                danhSachSai: chuoiCauSai,
+                tuLuan: baiLamTuLuan // <--- Biến mới thêm vào đây
             };
 
             document.getElementById("man-hinh-thi").style.display = "none";
             document.getElementById("man-hinh-ket-qua").style.display = "block";
             document.getElementById("diem-so").innerText = `${diemChinhThuc} Điểm`;
 
-            let linkGoogleSheet = "https://script.google.com/macros/s/AKfycbwbD37dlQGM4EEFG9f60naMsHWq5zJI8MfOHrnWxwWEJ6zwUy4YNN2d0TQu7EkOyLUK/exec";
+            let linkGoogleSheet = "https://script.google.com/macros/s/AKfycbxEbiQNKbDNLCJNie2QqBAOtVdyzuedMGGooMSvBobfLHGIZpXYLKBncwc8Ix6WTRkc/exec";
 
             fetch(linkGoogleSheet, {
                 method: "POST",
